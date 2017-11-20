@@ -1,0 +1,9 @@
+PROJECT_NAME     = "PyBaccarat"
+INPUT_DIRECTORY  = pybaccarat
+PROJECT_BRIEF    = "visit the ministry of silly walks"
+OPTIMIZE_OUTPUT_JAVA = YES
+RECURSIVE        = YES
+GENERATE_LATEX   = NO
+FILE_PATTERNS    = *.py
+OUTPUT_DIRECTORY = docs
+EXTRACT_PACKAGE  = YES

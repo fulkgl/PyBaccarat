@@ -1,0 +1,3 @@
+include README.md
+include docs/html/*
+include docs/html/search/*
