@@ -12,7 +12,7 @@ def readme(filespec):
 
 setup(
     name='pybaccarat',
-    version='0.01',
+    version='0.12',
     packages=['pybaccarat'],
     description='Play the card game Baccarat',
     long_description=readme('README.md'),

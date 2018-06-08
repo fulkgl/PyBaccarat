@@ -4,12 +4,22 @@
 @package pybaccarat
 This module is collection of classes used with playing the game
 <B>Baccarat</B>.
+<p>Classes:
+<ul compact>
+<li>Hand</li>
+<li>Scoreboard</li>
+<li>Ties</li>
+<li>Game</li>
+</ul>
 @author <A email="fulkgl@gmail.com">fulkgl@gmail.com</A>
-@version 0.01
+@version 0.12
 '''
 
+from msvcrt import getch
 from pybaccarat.playingcards import Card
 
+
+__version__ = 0.12
 
 class Hand(object):
     '''!
@@ -165,6 +175,221 @@ class Hand(object):
 # end class Hand
 
 
+class Scoreboard(object):
+    '''!
+    TBD
+    board0 = "big road"
+    board1 = "big eye boy"
+    board2 = "small road"
+    board3 = "cockroach pig"
+    '''
+    RED_SAME = 's'
+    BLUE_CHOP = 'C'
+
+    def __init__(self, type, table_size=6):
+        self.__debug = False
+        self.board_type = type
+        self.h_array = [ "R%d" % type ]
+        self.horiz_count = table_size * [0]
+        self.lines = (table_size+1) * [None]
+        self.lines[0] = "....v....1....v....2....v....3....v....4" + \
+            "....v....5....v....6" + " R%d" % type
+        for i in range(table_size):
+            self.lines[i + 1] = " "*60 + " %2d" % self.horiz_count[i]
+
+    def get_array(self):
+        return self.h_array
+
+    def get_horiz_count(self):
+        return self.horiz_count
+
+    def set_debug(self, dbug=True):
+        self.__debug = dbug
+
+    def mark(self, marker):
+        '''!
+        Mark the scoreboard. For board type 0 marker should be "B" or "P" for
+        Banker or Player. For board types 1,2,3 marker should be "C" or "s"
+        for Chop or Same.
+        @param self this instance of the class
+        @param marker single char
+        '''
+        if self.__debug:
+            print("mark(%s)" % marker)
+        if (self.board_type == 0 and (marker == "B" or marker == "P")) or \
+           (self.board_type > 0 and (marker == "C" or marker == 's')):
+            # only mark the board if it was a legal marker value
+
+            # Do we need to add a new column to the horizontal array?
+            # "len<2" means this is the first mark on this board.
+            # "[-1][0]!=marker" means this is a different marker from the
+            # last one recorded, thus requires a new column.
+            if len(self.h_array) < 2 or self.h_array[-1][0] != marker:
+                # add a new column with a count of 0 (incremented later)
+                self.h_array.append( [marker,0] )
+            # increment the count in this column
+            col = len(self.h_array)-1
+            self.h_array[col][1] += 1
+            # time to mark the print lines
+            row = self.h_array[col][1]
+            if self.__debug:
+                print("1row(%d)(%s)" % (row,str(self.h_array)))
+            #
+            six = len(self.horiz_count)
+            sixty = len(self.lines[0])-3
+            # update the horiz count
+            if row <= six:
+                self.horiz_count[row-1] += 1
+                self.lines[row] = self.lines[row][:sixty+1] + \
+                    "%2d" % self.horiz_count[row-1]
+            # calculate the slide
+            slide = 0
+            for iRow in range(row-1):
+                if self.__debug:
+                    #z = self.lines[iRow+1][col-1]
+                    print("six(%d)iRow(%d)marker(%s)" % (six,iRow,marker))
+                if six <= iRow:
+                    slide = row - iRow
+                    if self.__debug: print("break1")
+                    break
+                if self.__debug:
+                    z = self.lines[iRow+1][col-1]
+                    print("marker(%s)z(%s)" % (marker,z))
+                if marker != self.lines[iRow+1][col-1]:
+                    slide = row - iRow
+                    if self.__debug: print("break2")
+                    break
+            if slide == 0:
+                if six < row:
+                    slide = row - six
+                    if self.__debug: print("break3")
+                else:
+                    if " " != self.lines[row][col-1]:
+                        slide = 1
+                        if self.__debug: print("break4")
+            if self.__debug:
+                print("2row(%d) slide(%d) col(%d)" % (row,slide,col))
+            #
+            if sixty < col+slide:
+                # slide too far to the right, add special mark
+                self.lines[row-slide] = \
+                        self.lines[row-slide][:sixty] + ">" + \
+                        self.lines[row-slide][sixty+1:]
+            else:
+                #check for same below us without slide, change to "="
+                if slide == 0 and row < six:
+                    if marker == self.lines[row+1][col-1]:
+                        self.lines[row+1] = self.lines[row+1][:col-1] + "=" + \
+                            self.lines[row+1][col:]
+                #mark it, it should be empty
+                #if self.lines[row-slide][col+slide:col+slide+1] != " ":
+                #    # If it's not empty we have a serious problem.
+                #    print("WARNING not empty space")
+                #else:
+                self.lines[row-slide] = self.lines[row-slide][:col+slide-1] + \
+                    marker + self.lines[row-slide][col+slide:]
+
+    def get_cs_mark(self, main_array):
+        #main_array = main_board.get_array()
+        col = len(main_array)-1
+        row = main_array[-1][1]
+        if row == 1:
+            if 0 < col - 1 - self.board_type:
+                len_type_col = main_array[col - 1 - self.board_type][1]
+                len_col_1 = main_array[col - 1][1]
+                if len_col_1 != len_type_col:
+                    return self.BLUE_CHOP
+                return self.RED_SAME
+        else:
+            if 0 < col - self.board_type:
+                len_type_col = main_array[col - self.board_type][1]
+                if row - 1 == len_type_col:
+                    return self.BLUE_CHOP
+                return self.RED_SAME
+        return " "
+
+    def get_peek_B_array(self,arr):
+        temp = []
+        for i in list(arr):
+            a = i[:]
+            temp.append(a)
+        # copy by value not reference
+        last_col = len(arr)-1
+        if last_col<1 or 'B' != arr[last_col][0]:
+            temp.append(['B',1])
+        else:
+            temp[last_col][1] += 1
+        return temp
+
+    def print_lines(self):
+        out = ""
+        for line in self.lines:
+            out += line + "\n"
+        return out
+
+# end class Scoreboard
+
+
+class Ties(object):
+    '''!
+    This class tracks tie results.
+    '''
+
+    # -------------------------------------------------------------------------
+    def __init__(self):
+        '''!
+        TBD
+        '''
+        self.__tie_tracker = ""
+        self.__prior1 = "x"
+        self.__prior2 = "x"
+
+    # -------------------------------------------------------------------------
+    def mark(self, winner):
+        '''!
+        Record the winning hand from a game.
+        @param winner char 'B' or 'P' or 'T'
+        '''
+        #print("mark(%s)p1(%s)p2(%s)"%(winner,self.__prior1,self.__prior2))
+        if winner == "T":
+            if self.__prior1 == "x":
+                #print("1st hand of new shoe is tie")
+                new_tie = "X"
+            elif self.__prior1 == "T":
+                #print("T follow T")
+                self.__prior1 = self.__prior2
+                #new_tie = "T"
+                #self.__tie_tracker = self.__tie_tracker[:-1] #remove tailing "?"
+                self.__tie_tracker = self.__tie_tracker[:-1] + "T"
+                new_tie = "?"
+            else:
+                #print("T at end of seq")
+                new_tie = "?"
+            if len(self.__tie_tracker)%(5+1) == 5:
+                self.__tie_tracker += "-"
+            self.__tie_tracker += new_tie
+        else:
+            #print("not a tie, look at last for CS?")
+            if self.__prior1 == "T" and self.__prior2 != 'x':
+                if winner == self.__prior2:
+                    self.__tie_tracker = self.__tie_tracker[:-1] + "s"
+                else:
+                    self.__tie_tracker = self.__tie_tracker[:-1] + "C"
+        #
+        self.__prior2 = self.__prior1
+        self.__prior1 = winner
+
+    # -------------------------------------------------------------------------
+    def __str__(self):
+        '''!
+        Print the current status of the tie tracker.
+        '''
+        return "Ties(%s)" % self.__tie_tracker
+
+    # -------------------------------------------------------------------------
+# end class Ties
+
+
 class Game(object):
     '''!
     This class plays a game of Baccarat
@@ -182,6 +407,7 @@ class Game(object):
         ##!< system_play is the bacc system we are tracking
         self.system_play = the_system
         self.count_d7 = 0
+        self.count_p8 = 0
 
     # -------------------------------------------------------------------------
     def play_hand(self):
@@ -206,11 +432,15 @@ class Game(object):
             if self.__banker.need_hit(self.__player):
                 self.__banker.add(self.__shoe.deal())
         # get winning hand
-        if self.__banker < self.__player:
+        if self.__banker.value() < self.__player.value():
             win = "P"
             if not self.__player.is_natural():
                 diff = str(self.__player.value() - self.__banker.value())
-        elif self.__banker > self.__player:
+            if (self.__player.value() == 8) and \
+               (self.__player.get_card(2) is not None):
+                bonus = "P8"
+                self.count_p8 += 1
+        elif self.__banker.value() > self.__player.value():
             win = "B"
             if not self.__banker.is_natural():
                 diff = str(self.__banker.value() - self.__player.value())
@@ -222,21 +452,42 @@ class Game(object):
             win = "T"
         return (win, diff, bonus)
 
+    def side_count(self, hand, rc1, rc2):
+        for i in range(3):
+            c = hand.get_card(i)
+            if c is not None:
+                r = c.get_rank()
+                if r==1 or r==2 or r==3:
+                    rc1 += 1
+                elif r==4 or r==5 or r==6 or r==7:
+                    rc2 += 1
+                elif r==8 or r==9:
+                    rc1 += -1
+                    rc2 += -2
+        return rc1,rc2
+
     # -------------------------------------------------------------------------
-    def play(self, display=True, show_burn_cards=False):
+    def play(self, display=True, show_burn_cards=False, interactive=False):
         '''!
         TBD
         '''
         # start of new shoe procedure
         self.count_d7 = 0
+        self.count_p8 = 0
         self.__shoe.reset()
         self.__shoe.shuffle()
         self.__shoe.set_cut_card(-14)
+        tie_track = Ties()
+        boards = [Scoreboard(0),Scoreboard(1),Scoreboard(2),Scoreboard(3)]
+        rc1 = 0
+        rc2 = 0
+        #
         burn = self.__shoe.deal()
         if display:
             display_burn = "burn(%s)" % str(burn)
         if self.system_play is not None:
-            self.system_play.new_shoe(burn)
+            self.system_play.new_shoe(burn,boards)
+            self.system_play.set_tie_object(tie_track)
         burn = burn.get_rank()
         if burn > 9:
             burn = 10
@@ -248,45 +499,100 @@ class Game(object):
                 display_burn += " XX"
         if display:
             print(display_burn)
+
         # play the entire shoe
         hand_number = 0
         last_hand = False
         bpt = {'B': 0, 'P': 0, 'T': 0}
+        if self.system_play is not None:
+            self.system_play.set_bpt_object(bpt)
+        #
         while not last_hand:
             # start of a hand
             hand_number += 1
             self.__player.empty()
             self.__banker.empty()
             last_hand = self.__shoe.cut_card_seen()
+            glf_hand = ""
+            if self.system_play is not None:
+                #
+                print(79*"=")
+                print(boards[0].print_lines())
+                print(boards[2].print_lines())
+                print(str(tie_track))
+                print(self.system_play.end_shoe())
+                #
+                glf_hand = self.system_play.hand_pre(hand_number)
+
+            if interactive:
+                print(boards[0].print_lines())
+                print(boards[2].print_lines())
+                print("play? ")
+                keystroke = ord(getch())
+                if keystroke == 27:
+                    interactive = False
+                #if False:
+                #    print("%2s %12s %12s %1s%1s %2s %12s %2s/%2s %5s" % ("H#",
+                #        "player","banker","W","D","B","","r1","r2","Bpeek"))
 
             (win, diff, bonus) = self.play_hand()
             bpt[win] += 1
+            tie_track.mark(win)
+            boards[0].mark(win)
+            if win != "T":
+                boards[2].mark(boards[2].get_cs_mark(boards[0].get_array()))
 
             # shoe hand results
             if self.system_play is not None:
-                glf_hand = self.system_play.hand(hand_number,
-                                                 win+diff,
-                                                 self.__player,
-                                                 self.__banker)
-            else:
-                glf_hand = ""
+                glf_hand += self.system_play.hand_post(win+diff,
+                                                       self.__player,
+                                                       self.__banker)
+
+            #running counts
+            rc1,rc2 = self.side_count(self.__player, rc1, rc2)
+            rc1,rc2 = self.side_count(self.__banker, rc1, rc2)
+
             if display:
-                print("%02d P%d%-10s B%d%-10s %s%s %s BPT=%02d-%02d-%02d %s" %
+                board0horiz_count = boards[0].get_horiz_count()
+                #
+                peekB = ""
+                if True:
+                    board0arr = boards[0].get_array()
+                    arrayB = boards[0].get_peek_B_array(board0arr)
+                    peekB += boards[1].get_cs_mark(arrayB)
+                    peekB += boards[2].get_cs_mark(arrayB)
+                    peekB += boards[3].get_cs_mark(arrayB)
+                #
+                flag1 = " "
+                flag2 = " "
+                if (25 + hand_number // 11) < rc1:
+                    flag1 = ">"
+                if (32 - 4 * (hand_number // 11)) < rc2:
+                    flag2 = "<"
+
+                print(("%02d P%d%-10s B%d%-10s %s%s %s BPT=%02d-%02d-%02d" + \
+                      " %02d/%02d %s%s%02d,%02d%s %s") %
                       (hand_number,
                        self.__player.value(), str(self.__player),
                        self.__banker.value(), str(self.__banker),
-                       win, diff, bonus,
-                       bpt['B'], bpt['P'], bpt['T'], glf_hand))
+                       win, diff, bonus, bpt['B'], bpt['P'], bpt['T'],
+                       board0horiz_count[0], board0horiz_count[1], peekB,
+                       flag1, rc1, rc2, flag2, glf_hand))
             # notify the user
             if self.__shoe.cut_card_seen() and not last_hand:
                 if display:
                     print("last hand of this shoe")
             #
+
         #
         # end of shoe
         #
         if display:
-            print("                                D7(%d)" % self.count_d7)
+            print("%-30s  D7(%d) P8(%d)" % \
+                (str(tie_track),self.count_d7,self.count_p8))
+            print(boards[0].print_lines())
+            print(boards[2].print_lines())
+
         if self.system_play is not None:
             print(self.system_play.end_shoe())
     # -------------------------------------------------------------------------

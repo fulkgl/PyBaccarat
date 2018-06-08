@@ -10,9 +10,12 @@ python tests\unittest_card.py [-v]
 @endcode
 @author <A email="fulkgl@gmail.com">fulkgl@gmail.com</A>
 """
-import unittest
+import os,sys,unittest
 
-from playingcards import Card
+# sys.path.append(".")
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)     # .=path to dev work
+from pybaccarat.playingcards import Card    # the target of the test
 
 
 class TestCard(unittest.TestCase):
@@ -49,8 +52,9 @@ class TestCard(unittest.TestCase):
             cbad = Card('s', 5)
             self.fail("s5 should have thrown a ValueError but did not")
         except ValueError as ex:
-            self.assertEqual("new_ordinal(s) not an integer", str(ex),
-                             "check msg")
+            actual = str(ex)
+            expected = "invalid syntax new_ordinal(s) suit(5)"
+            self.assertEqual(expected, actual, "check msg actual(%s)" % actual)
 
         # bad suit value
         with self.assertRaises(ValueError):
@@ -76,6 +80,34 @@ class TestCard(unittest.TestCase):
                 self.fail("bad should have thrown a ValueError but did not")
             except ValueError as ex:
                 self.assertEqual(expected, str(ex), "check msg")
+
+        # try the new 3rd constructor syntax
+        c3good = Card("As")
+        self.assertEqual("As", str(c3good), "normal As")
+        c3good = Card("aS")
+        self.assertEqual("As", str(c3good), "odd cases As")
+        # try bad syntax
+        try:
+            c3bad = Card("bad")
+            actual = ""
+        except Exception as ex:
+            actual = str(ex)
+        self.assertEqual("new_ordinal(bad) not legel length 2 string", 
+            actual, "msg(%s)"%actual)
+        try:
+            c3bad = Card("cT")
+            actual = ""
+        except Exception as ex:
+            actual = str(ex)
+        self.assertEqual("illegal rank part of new_ordinal(cT)",
+            actual, "msg(%s)"%actual)
+        try:
+            c3bad = Card("TT")
+            actual = ""
+        except Exception as ex:
+            actual = str(ex)
+        self.assertEqual("new_suit(t) not a legal value('cdhs')",
+            actual, "msg(%s)"%actual)
 
     def test_getrank(self):
         '''
@@ -289,9 +321,13 @@ class TestCard(unittest.TestCase):
         '''
         # check namespace values
         c5s = Card(5, 's')
-        self.assertEqual("<class 'playingcards.Card'>", str(c5s.__class__),
-                         "class")
-        self.assertEqual("playingcards", c5s.__module__, "module")
+        class_actual = str(c5s.__class__)
+        self.assertEqual("<class 'pybaccarat.playingcards.Card'>",
+                         class_actual,
+                         ".class(%s)" % class_actual)
+        module_actual = str(c5s.__module__)
+        self.assertEqual("pybaccarat.playingcards", module_actual,
+                         ".module(%s)" % module_actual)
         docstring = c5s.__doc__
         self.assertTrue(isinstance(docstring, str), "docstring is string")
         self.assertTrue(0 < len(docstring), "some string of >0 exists")

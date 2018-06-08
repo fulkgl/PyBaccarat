@@ -13,7 +13,7 @@ from playingcards import Card
 from playingcards import Stack
 
 @author <A email="fulkgl@gmail.com">fulkgl@gmail.com</A>
-@version 0.01
+@version 0.11
 '''
 
 # http://www.stack.nl/~dimitri/doxygen/index.html
@@ -44,10 +44,11 @@ class Card(object):
     # -------------------------------------------------------------------------
     def __init__(self, new_ordinal, new_suit=None):
         '''!
-        Create a new playing card. There are 2 syntaxes that can be used to
+        Create a new playing card. There are 3 syntaxes that can be used to
         create this new card. First, a single integer in the range 0 to 51.
         Where each integer maps to a particular rank and suit. The second
-        syntax is to supply a rank and suit.
+        syntax is to supply a rank and suit. Third, a string naming of the
+        rank and suit.
 
         Example usage:
         @code{.py}
@@ -56,6 +57,8 @@ class Card(object):
             card5s = baccarat.playingcards.Card(43) #(5, 's')
             #create a jack of diamods
             cardJh = baccarat.playingcards.Card(11, 'd')
+            #create an ace of clubs
+            cardAs = baccarat.playingcards.Card("Ac")
         @endcode
 
         The first syntax is a single integer value 0 to 51. This would likely
@@ -75,10 +78,15 @@ class Card(object):
         rank and suit. The rank is an integer in the range 1 to 13.
         The suit is a single string character.
 
+        The third syntax is similar to the second, only using the string
+        representation of the Card. This is the same syntax used to write a
+        Card object with the str() method.
+
         @param self this object pointer reference
         @param new_ordinal integer value 0 to 51 inclusive.
             If 2 arguements are given for the creation of a card the integer
-            value will be the rank in the range 1 to 13.
+            value will be the rank in the range 1 to 13. Or a string
+            representation of the Card value.
         @param new_suit Used only when 2 arguments are given for creating a
             new card. The single string character will represent the suit.
             Accepted values are 's', 'h', 'd', or 'c'.
@@ -97,24 +105,31 @@ class Card(object):
         #
         # validate data
         #
-        if not isinstance(new_ordinal, int):
-            raise ValueError("new_ordinal(%s) not an integer" %
-                             str(new_ordinal))
-
-        if new_suit is None:
+        if isinstance(new_ordinal, str) and new_suit is None:
             #
-            # The first syntax has been used. new_ordinal must be an integer
-            # in the range 0 to 51.
+            # Third syntax for string representation
             #
-            if (new_ordinal < 0) or (51 < new_ordinal):
-                raise ValueError("new_ordinal(%s) not in legal range 0..51" %
-                                 str(new_ordinal))
-            new_rank = 1 + (new_ordinal % 13)
-            new_suit = 'cdhs'[new_ordinal / 13]
-        else:
+            new_ordinal = new_ordinal.strip()
+            if len(new_ordinal) != 2:
+                raise ValueError("new_ordinal(%s) not legel length 2 string" %
+                    str(new_ordinal))
+            # look for legal rank
+            new_rank = 'A23456789TJQK'.find(new_ordinal[0].upper())
+            if new_rank == -1:
+                raise ValueError("illegal rank part of new_ordinal(%s)" %
+                    str(new_ordinal))
+            new_rank += 1  # 1..13
+            #accept upper/lower suit name
+            new_suit = new_ordinal[1].lower()
+            suit_index = 'cdhs'.find(new_suit)
+            if suit_index == -1:
+                raise ValueError("new_suit(%s) not a legal value('cdhs')" %
+                                 str(new_suit))
+            new_ordinal = (new_rank - 1) + (13 * suit_index)
+        elif isinstance(new_ordinal, int) and new_suit is not None:
             #
-            # The second syntax has been used. One integer (1 to 13) and a
-            # single string character for the suit.
+            # The second syntax has been used. One integer (1 to 13) and
+            # a single string character for the suit.
             #
             if (new_ordinal < 1) or (13 < new_ordinal):
                 raise ValueError("new_ordinal(%s) not in rank range 1..13" %
@@ -128,7 +143,53 @@ class Card(object):
                                  str(new_suit))
             new_rank = new_ordinal
             new_ordinal = (new_rank - 1) + (13 * suit_index)
+        elif isinstance(new_ordinal, int) and new_suit is None:
+            #
+            # The first syntax has been used. new_ordinal must be an
+            # integer in the range 0 to 51.
+            #
+            if (new_ordinal < 0) or (51 < new_ordinal):
+                raise ValueError("new_ordinal(%s) not in legal range 0..51" %
+                                 str(new_ordinal))
+            new_rank = 1 + (new_ordinal % 13)
+            new_suit = 'cdhs'[new_ordinal // 13]
+        else:
+            raise ValueError("invalid syntax new_ordinal(%s) suit(%s)" % (
+                str(new_ordinal),str(new_suit)))
+        #
+        '''
+            if not isinstance(new_ordinal, int):
+                raise ValueError("new_ordinal(%s) not an integer" %
+                                 str(new_ordinal))
 
+            if new_suit is None:
+                #
+                # The first syntax has been used. new_ordinal must be an integer
+                # in the range 0 to 51.
+                #
+                if (new_ordinal < 0) or (51 < new_ordinal):
+                    raise ValueError("new_ordinal(%s) not in legal range 0..51"%
+                                     str(new_ordinal))
+                new_rank = 1 + (new_ordinal % 13)
+                new_suit = 'cdhs'[new_ordinal // 13]
+            else:
+                #
+                # The second syntax has been used. One integer (1 to 13) and a
+                # single string character for the suit.
+                #
+                if (new_ordinal < 1) or (13 < new_ordinal):
+                    raise ValueError("new_ordinal(%s) not in rank range 1..13" %
+                                     str(new_ordinal))
+                if (not isinstance(new_suit, str)) or (len(new_suit) != 1):
+                    raise ValueError("new_suit(%s) is not a single char" %
+                                     str(new_suit))
+                suit_index = 'cdhs'.index(new_suit)
+                if suit_index == -1:
+                    raise ValueError("new_suit(%s) not a legal value('cdhs')" %
+                                     str(new_suit))
+                new_rank = new_ordinal
+                new_ordinal = (new_rank - 1) + (13 * suit_index)
+        '''
         #
         # save data
         #
@@ -383,7 +444,7 @@ class Shoe(object):
             # tournament starting positions for a 6 spot tournament table.
             import playingcards
             shoe = playingcards.Shoe([ Card(1,'s'), Card(2,'s'),
-                Card(3,'s'), Card(4,'s'), Card(5,'s'), Card(6,'s) ])
+                Card(3,'s'), Card(4,'s'), Card(5,'s'), Card(6,'s') ])
             shoe.reset()
             shoe.shuffle()
             for i in range(6):
@@ -410,18 +471,25 @@ class Shoe(object):
             #
             # Not an integer. What about an array of cards?
             #
+            self.__enable_shuffle = False  # don't shuffle this custom shoe
             if isinstance(number_decks, list):
                 for i in number_decks:
                     if not isinstance(i, Card):
                         raise ValueError("non-card type params(%s)" % type(i))
                     self.__cards.append(i)
+            elif isinstance(number_decks, str):
+                # pass.... filespec?
+                raise ValueError("number_decks(%s) not a valid syntax" %
+                                 str(number_decks))
+                #
             else:
-                raise ValueError("number_decks(%s) not a valid integer" %
+                raise ValueError("number_decks(%s) not a valid syntax" %
                                  str(number_decks))
         else:
             #
             # number_decks is an integer
             #
+            self.__enable_shuffle = True
             if (number_decks < 1) or (12 < number_decks):
                 raise ValueError("number_decks(%s) not a legal value" %
                                  str(number_decks))
@@ -471,7 +539,8 @@ class Shoe(object):
         @todo Find a way to attach a user's shuffle method instead of our
             own default.
         '''
-        random.shuffle(self.__cards)
+        if self.__enable_shuffle:
+            random.shuffle(self.__cards)
 
     # -------------------------------------------------------------------------
     def set_cut_card(self, position):
@@ -567,6 +636,141 @@ class Shoe(object):
             card = self.__cards[self.__next_card]
             self.__next_card += 1
         return card
+
+    # -------------------------------------------------------------------------
+    def discard_adjust_baccarat(self, type):
+        '''!
+        The discard pile is our shoe prior to the next_card index.
+        Some games will discard the used cards in a specific manor (i.e.
+        Baccarat). They do that so that when a player complains about the
+        last hand after the dealer has swept the cards away, the pit card
+        back the cards out of the discard pile to show the prior hands.
+        
+        2P2B:
+            deal:  p1 b1 p2 b2 = -4 -3 -2 -1
+                   ^--------^ swap -4 -1
+                         ^--^ swap -2 -1
+            sweep: b2 b1 p1 p2(top)
+        3P2B:
+            deal:  p1 b1 p2 b2 p3
+                   ^--------^    swap -5 -2
+                         ^--^    swap -3 -2
+            sweep: b2 b1 p1 p2 p3(top)
+        2P3B:
+            deal:  p1 b1 p2 b2 b3
+                   ^-----------^ swap -5 -1
+                      ^-----^    swap -4 -2
+                         ^--^    swap -3 -2
+                            ^--^ swap -2 -1
+            sweep: b3 b2 b1 p1 p2(top)
+        3P3B:
+            deal:  p1 b1 p2 b2 p3 b3
+                   ^--------------^ swap -6 -1
+                      ^-----^       swap -5 -3
+                         ^--^       swap -4 -3
+                            ^-----^ swap -3 -1
+                               ^--^ swap -2 -1
+            sweep: b3 b2 b1 p1 p2 p3(top)
+        '''
+        if type=="2P2B":
+            if 3 <= self.__next_card:
+                card1 = self.__cards[self.__next_card - 1]
+                card2 = self.__cards[self.__next_card - 2]
+                #ard3 =                               - 3]
+                card4 = self.__cards[self.__next_card - 4]
+                self.__cards[self.__next_card - 4] = card1
+                #                             - 3] = card3
+                self.__cards[self.__next_card - 2] = card4
+                self.__cards[self.__next_card - 1] = card2
+        elif type=="3P2B":
+            if 4 <= self.__next_card:
+                #ard1 =                               - 1]
+                card2 = self.__cards[self.__next_card - 2]
+                card3 = self.__cards[self.__next_card - 3]
+                #ard4 =                               - 4]
+                card5 = self.__cards[self.__next_card - 5]
+                self.__cards[self.__next_card - 5] = card2
+                #                             - 4] = card4
+                self.__cards[self.__next_card - 3] = card5
+                self.__cards[self.__next_card - 2] = card3
+                #                             - 1] = card1
+        elif type=="2P3B":
+            if 4 <= self.__next_card:
+                card1 = self.__cards[self.__next_card - 1]
+                card2 = self.__cards[self.__next_card - 2]
+                card3 = self.__cards[self.__next_card - 3]
+                card4 = self.__cards[self.__next_card - 4]
+                card5 = self.__cards[self.__next_card - 5]
+                self.__cards[self.__next_card - 5] = card1
+                self.__cards[self.__next_card - 4] = card2
+                self.__cards[self.__next_card - 3] = card4
+                self.__cards[self.__next_card - 2] = card5
+                self.__cards[self.__next_card - 1] = card3
+        elif type=="3P3B":
+            if 5 <= self.__next_card:
+                # [-6] = card1
+                # [-5] = card3
+                card1 = self.__cards[self.__next_card - 1]
+                card2 = self.__cards[self.__next_card - 2]
+                card3 = self.__cards[self.__next_card - 3]
+                card4 = self.__cards[self.__next_card - 4]
+                card5 = self.__cards[self.__next_card - 5]
+                card6 = self.__cards[self.__next_card - 6]
+                self.__cards[self.__next_card - 6] = card1
+                self.__cards[self.__next_card - 5] = card3
+                self.__cards[self.__next_card - 4] = card5
+                self.__cards[self.__next_card - 3] = card6
+                self.__cards[self.__next_card - 2] = card4
+                self.__cards[self.__next_card - 1] = card2
+        else:
+            pass # not a legal type
+
+    # -------------------------------------------------------------------------
+    def save_shoe(self, filespec):
+        '''!
+        Save this shoe to a disk file specified.
+        '''
+        with open(filespec, 'w') as f:
+            i = 0
+            # write a psuedo burn first
+            line = ""
+            while i < len(self.__cards) and i < 7:
+                line += str(self.__cards[i])+" "
+                i += 1
+            f.write(line+"\n")
+            # walk the shoe writing psuedo hands, 5 cards
+            while i < len(self.__cards)-14:
+                line = ""
+                j = 0
+                while j < 5:
+                    line += str(self.__cards[i])+" "
+                    j += 1
+                    i += 1
+                f.write(line+"\n")
+            # write a psuedo end of shoe bolt of what's left
+            line = ""
+            while i < len(self.__cards):
+                line += str(self.__cards[i])+" "
+                i += 1
+            f.write(line+"\n")
+
+    # -------------------------------------------------------------------------
+    def load_shoe(self, filespec):
+        '''!
+        Load a shoe from a disk file specified.
+        '''
+        with open(filespec, 'r') as f:
+            contents = f.read()
+        contents = contents.strip()
+        #while len(contents) > 0:
+        #   parse " " "," "\n"
+        #for i in list_of_cards:
+        #   if isinstance(i, Card):
+        #       self.__cards.append(i)
+        #   elif isinstance(i, str):
+        #       self.__cards.append(Card(i))
+        #   else:
+        #       raise ValueError("non-card type params(%s)" % type(i))
 
     # -------------------------------------------------------------------------
 # end class Shoe()

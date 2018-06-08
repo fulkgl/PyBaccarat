@@ -9,12 +9,22 @@
 # self.assertIsNone(var, "msg")
 # self.fail(msg)
 
+import os #needed for os.sep
 import unittest
 
-from playingcards import Shoe, Card
+from pybaccarat.playingcards import Shoe, Card
 
 
-class TestCard(unittest.TestCase):
+def delete_file(filespec):
+    '''!
+    Delete a file if it exists.
+    @param filespec file to delete
+    '''
+    if os.path.exists(filespec):
+        os.remove(filespec)
+
+
+class TestShoe(unittest.TestCase):
     '''
     unit test Shoe class
     '''
@@ -129,6 +139,31 @@ class TestCard(unittest.TestCase):
         self.assertIsNotNone(card1, "third of shoe2")
         card1 = shoe2.deal()
         self.assertIsNone(card1, "fourth of shoe2 (empty)")
+
+    def test_save_shoe(self):
+        '''!
+        test method save_shoe()
+        '''
+        shoe = Shoe() #default single deck
+        #no shuffle so we can test a simple single deck in order
+        temp_file = os.sep + 'tmp' + os.sep + 'ut1.shoe'
+        delete_file(temp_file)
+        shoe.save_shoe(temp_file)
+        expect = "Ac 2c 3c 4c 5c 6c 7c \n"+\
+                 "8c 9c Tc Jc Qc \n"+\
+                 "Kc Ad 2d 3d 4d \n"+\
+                 "5d 6d 7d 8d 9d \n"+\
+                 "Td Jd Qd Kd Ah \n"+\
+                 "2h 3h 4h 5h 6h \n"+\
+                 "7h 8h 9h Th Jh \n"+\
+                 "Qh Kh As 2s 3s \n"+\
+                 "4s 5s 6s 7s 8s 9s Ts Js Qs Ks \n"
+        with open(temp_file, 'r') as f:
+            actual = f.read()
+        self.assertEqual(expect, actual, "saved single unshuffled deck")
+
+    def test_load_shoe(self):
+        pass
 
 
 if __name__ == '__main__':

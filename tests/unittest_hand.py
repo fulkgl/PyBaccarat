@@ -5,9 +5,8 @@ Unit test for the baccarat.Hand class.
 '''
 import unittest
 
-from baccarat import Hand
-from playingcards import Card
-from playingcards import Shoe
+from pybaccarat.baccarat import Hand
+from pybaccarat.playingcards import Card,Shoe
 
 
 class TestHand(unittest.TestCase):
