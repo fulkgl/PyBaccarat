@@ -99,3 +99,8 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# git and IDEs (idea=PyCharm vs=VisualStudio)
+.git/
+.idea/
+.vs/

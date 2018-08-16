@@ -1,18 +1,29 @@
 #!/usr/bin/python
 
-# ---unit tests---
-# self.assertTrue(bool, "msg")
-# self.assertFalse(bool, "msg")
-# self.assertEqual(expected, actual, "msg")
-# self.assertNotEqual(expected, actual, "msg")
-# self.assertIsNotNone(var, "msg")
-# self.assertIsNone(var, "msg")
-# self.fail(msg)
+"""!
+Unit test for the Shoe class.
 
-import os #needed for os.sep
-import unittest
+To execute the unit test from base dir location, enter:
+@code
+python tests\test_shoe.py [-v]
+@endcode
 
-from pybaccarat.playingcards import Shoe, Card
+    self.assertIsNone(obj, "msg")
+    self.assertIsNotNone(obj, "msg")
+    self.assertTrue(boolean, "msg")
+    self.assertFalse(boolean, "msg")
+    self.assertEqual(expect, actual, "msg")
+    self.assertNotEqual(expect, actual, "msg")
+    with self.assertRaises(ValueError): causes_exception
+    self.fail("msg")
+
+@author <A email="fulkgl@gmail.com">fulkgl@gmail.com</A>
+"""
+
+import os,sys,unittest
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))[:-6]) #=dev first
+from pybaccarat.playingcards import Shoe
+from pybaccarat.playingcards import Card
 
 
 def delete_file(filespec):
@@ -41,12 +52,13 @@ class TestShoe(unittest.TestCase):
         self.assertIsNotNone(shoe, "not none Shoe(8)")
 
         # test bad construction
-        expected = "number_decks(8) not a valid integer"
+        expected = "number_decks(8) invalid value(8)"
         try:
             shoe = Shoe("8")
             self.fail("expected a failure because of string param")
         except Exception as ex:
-            self.assertEqual(expected, str(ex), 'check msg Shoe("8")')
+            actual = str(ex)
+            self.assertEqual(expected, actual, 'msg Shoe("8")(%s)'%actual)
 
         # default constructor
         shoe = Shoe()
@@ -166,5 +178,8 @@ class TestShoe(unittest.TestCase):
         pass
 
 
+#
+# Command line entry point
+#
 if __name__ == '__main__':
     unittest.main()

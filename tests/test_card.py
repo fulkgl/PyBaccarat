@@ -5,23 +5,32 @@ Unit test for the Card class.
 
 To execute the unit test from base dir location, enter:
 @code
-cd pybaccarat_base
-python tests\unittest_card.py [-v]
+python tests\test_card.py [-v]
+python tests\test_card.py TestCard.test_constructor
 @endcode
+
+    self.assertIsNone(obj, "msg")
+    self.assertIsNotNone(obj, "msg")
+    self.assertTrue(boolean, "msg")
+    self.assertFalse(boolean, "msg")
+    self.assertEqual(expect, actual, "msg")
+    self.assertNotEqual(expect, actual, "msg")
+    with self.assertRaises(ValueError): causes_exception
+    self.fail("msg")
+
 @author <A email="fulkgl@gmail.com">fulkgl@gmail.com</A>
 """
-import os,sys,unittest
 
-# sys.path.append(".")
-HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)     # .=path to dev work
-from pybaccarat.playingcards import Card    # the target of the test
+import os,sys,unittest
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))[:-6]) #=dev first
+from pybaccarat.playingcards import Card
 
 
 class TestCard(unittest.TestCase):
     '''
     Unit test for the Card class.
     '''
+
     def test_constructor(self):
         '''
         test card construction

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 '''!
-@package pybaccarat
+@package pybaccarat.baccarat
 This module is collection of classes used with playing the game
 <B>Baccarat</B>.
 <p>Classes:
@@ -12,14 +12,14 @@ This module is collection of classes used with playing the game
 <li>Game</li>
 </ul>
 @author <A email="fulkgl@gmail.com">fulkgl@gmail.com</A>
-@version 0.12
+@version 0.18
 '''
 
 from msvcrt import getch
-from pybaccarat.playingcards import Card
+from pybaccarat.playingcards import Card,Shoe
 
 
-__version__ = 0.12
+__version__ = 0.18
 
 class Hand(object):
     '''!
@@ -396,16 +396,25 @@ class Game(object):
     '''
 
     # -------------------------------------------------------------------------
-    def __init__(self, the_shoe, the_player, the_banker, the_system=None):
+    def __init__(self, shoe=None, player=None, banker=None, system=None):
         '''!
         TBD
         '''
-        self.__shoe = the_shoe
-        self.__player = the_player
-        ##!< banker is the Hand for bank
-        self.__banker = the_banker
+        #
+        if shoe is None:
+            shoe = Shoe(8)
+        if player is None:
+            player = Hand()
+        if banker is None:
+            banker = Hand()
+        #
+        self.__shoe = shoe
+        self.__player = player
+        ##!< banker is the Hand for banker
+        self.__banker = banker
         ##!< system_play is the bacc system we are tracking
-        self.system_play = the_system
+        self.system_play = system
+        #
         self.count_d7 = 0
         self.count_p8 = 0
 
@@ -481,13 +490,12 @@ class Game(object):
         boards = [Scoreboard(0),Scoreboard(1),Scoreboard(2),Scoreboard(3)]
         rc1 = 0
         rc2 = 0
-        #
+
+        # burn procedure
         burn = self.__shoe.deal()
         if display:
             display_burn = "burn(%s)" % str(burn)
-        if self.system_play is not None:
-            self.system_play.new_shoe(burn,boards)
-            self.system_play.set_tie_object(tie_track)
+        burned_cards = [burn]
         burn = burn.get_rank()
         if burn > 9:
             burn = 10
@@ -495,10 +503,14 @@ class Game(object):
             burned_card = self.__shoe.deal()
             if show_burn_cards:
                 display_burn += " " + str(burned_card)
+                burned_cards.append(burned_card)
             else:
                 display_burn += " XX"
         if display:
             print(display_burn)
+        if self.system_play is not None:
+            self.system_play.new_shoe(burned_cards,boards)
+            self.system_play.set_tie_object(tie_track)
 
         # play the entire shoe
         hand_number = 0

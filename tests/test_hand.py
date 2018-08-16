@@ -1,10 +1,28 @@
 #!/usr/bin/python
 
-'''
-Unit test for the baccarat.Hand class.
-'''
-import unittest
+"""!
+Unit test for the Hand class.
 
+To execute the unit test from base dir location, enter:
+@code
+python tests\test_hand.py [-v]
+python tests\test_card.py TestHand.test_constructor
+@endcode
+
+    self.assertIsNone(obj, "msg")
+    self.assertIsNotNone(obj, "msg")
+    self.assertTrue(boolean, "msg")
+    self.assertFalse(boolean, "msg")
+    self.assertEqual(expect, actual, "msg")
+    self.assertNotEqual(expect, actual, "msg")
+    with self.assertRaises(ValueError): causes_exception
+    self.fail("msg")
+
+@author <A email="fulkgl@gmail.com">fulkgl@gmail.com</A>
+"""
+
+import os,sys,unittest
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))[:-6]) #=dev first
 from pybaccarat.baccarat import Hand
 from pybaccarat.playingcards import Card,Shoe
 
@@ -13,6 +31,7 @@ class TestHand(unittest.TestCase):
     '''
     Unit test for the baccarat.Hand class.
     '''
+
     def test_constructor(self):
         '''
         test hand construction

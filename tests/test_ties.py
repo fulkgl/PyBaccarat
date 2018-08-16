@@ -5,32 +5,24 @@ Unit test for the Ties class.
 
 To execute the unit test from base dir location, enter:
 @code
-cd pybaccarat_base
-python tests\unittest_ties.py [-v]
-
-rem Run a single test case
-cd C:\git\PyBaccarat
-python tests\unittest_ties.py TestTies.test_basic
-
+python tests\test_ties.py [-v]
+python tests\test_ties.py TestTies.test_basic
 @endcode
+
+    self.assertIsNone(obj, "msg")
+    self.assertIsNotNone(obj, "msg")
+    self.assertTrue(boolean, "msg")
+    self.assertFalse(boolean, "msg")
+    self.assertEqual(expect, actual, "msg")
+    self.assertNotEqual(expect, actual, "msg")
+    with self.assertRaises(ValueError): causes_exception
+    self.fail("msg")
+
 @author <A email="fulkgl@gmail.com">fulkgl@gmail.com</A>
 """
 
-# We want to test this dev target. That means the dev target must be first
-# in the PythonPath env var. That translates to the sys.path inside of Python.
-import sys,os
-# sys.path.append(".")
-HERE = os.path.dirname(os.path.abspath(__file__)) #+os.sep+".."
-#print("HERE(%s)" % HERE)
-#DEVPATH=HERE[:-6] #remove "/tests"
-#print("DEVPATH(%s)" % DEVPATH)
-sys.path.insert(0, HERE[:-6]) # path to dev work, remove "/tests"
-
-from gsyslog import gsyslog  # the target of the test
-import unittest
-
-from pybaccarat.playingcards import Card
-from pybaccarat.baccarat import Scoreboard,__version__
+import os,sys,unittest
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))[:-6]) #=dev first
 from pybaccarat.baccarat import Ties
 
 

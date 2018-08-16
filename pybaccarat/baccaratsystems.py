@@ -5,9 +5,9 @@
 This module is collection of classes used with
 systems for playing the game <B>Baccarat</B>.
 @author <A email="fulkgl@gmail.com">fulkgl@gmail.com</A>
-@version 0.01
 '''
 
+import sys
 from msvcrt import getch
 
 
@@ -38,14 +38,14 @@ class Dragon(object):
             self.dragon_count -= 1
 
     # -------------------------------------------------------------------------
-    def new_shoe(self, burn_card):
+    def new_shoe(self, burn_cards):
         '''!
         Begin a new shoe.
-        @param burn_card <em>Card</em>
+        @param burn_cards <em>Card</em>
         '''
         ##!< dragon_count used to count my system
         self.dragon_count = 0
-        self.update_count(burn_card.get_rank())
+        self.update_count(burn_cards[0].get_rank())
         ##!< dragon_play is used for display out
         self.dragon_play = "    "
         ##!< dragon_dict tracks the side bet difference results
@@ -174,7 +174,7 @@ class EZDragon(object):
             print("         count(%d)" % self.count)
 
     # -------------------------------------------------------------------------
-    def new_shoe(self, burn_card):
+    def new_shoe(self, burn_cards):
         '''!
         Start of a new shoe. Start the new count. The burn card is exposed so
         we can record that as an initial value.
@@ -182,7 +182,7 @@ class EZDragon(object):
             the count.
         '''
         self.count = 0
-        self.add_count(burn_card.get_rank())
+        self.add_count(burn_cards[0].get_rank())
         self.play_w = 0
         self.play_l = 0
 
@@ -261,8 +261,8 @@ class EZDragon(object):
 
 
 class BaccSys(object):
-    def __init__(self, sys_name=""):
-        self.name = sys_name
+    def __init__(self, system_name=""):
+        self.name = system_name
         self.hand_number = 0
         self.play_on = None
         self.play_size = 0
@@ -274,7 +274,7 @@ class BaccSys(object):
         self.WLseq = []
         self.last_WLT = ""
         self.quit_shoe = False
-    def new_shoe(self, burn_card, boards=None):
+    def new_shoe(self, burn_cards, boards=None):
         self.hand_number = 0
         self.play_on = None
         self.play_size = 0
@@ -354,7 +354,9 @@ class BaccSys(object):
         self.play_size = 0
         return ""
     def end_shoe(self):
-        return ""
+        #return ""
+        return "Sys(%s) %d-%d-%d=%+.2f, %s" % (self.name,self.won, \
+            self.lost,self.tied,self.money,self.print_WLseq())
     def opposite_side(self, side):
         if side == "P":
             return "B"
@@ -364,11 +366,36 @@ class BaccSys(object):
     def play(self, side, size=1):
         self.play_on = side
         self.play_size = size
+        return side
     def quit_this_shoe(self):
         self.quit_shoe = True
+    def print_WLseq(self):
+        seq = ""
+        for i in self.WLseq:
+            for j in i:
+                seq += "0123456789abcdefghij"[j]
+            seq += " "
+        return seq
+    def get_keystroke(self):
+        keystroke = ord(getch())
+        if 3 <= sys.version_info[0]:
+            keystroke1 = ord(getch())
+            keystroke += 256*keystroke1
+        return keystroke
 
 class interactive(BaccSys):
-    def __init__(self, sys_name=""):
+    '''!
+    Play Baccarat with interactive selection of hand plays.
+    Press the letter P to play player.
+    Press the letter B to play banker.
+    Press the enter key to make no play on a hand.
+    Press the ESC key to skip to the end of the shoe.
+    Press the Ctrl-C for emergency fast exit.
+    Press numbers 1 or 2 or 3 or 4 or 5 before the P or B to increase size.
+    For instance, press 3 then P will play 3 units on player.
+    If no number is pressed it's assumed to be 1.
+    '''
+    def __init__(self, system_name=""):
         # first, call parent
         parent_ret = super(interactive,self).__init__("interactive")
     def hand_pre(self, hand_num):
@@ -382,37 +409,25 @@ class interactive(BaccSys):
         '''
         # first, call parent
         parent_ret = super(interactive,self).hand_pre(hand_num)
-        if not self.quit_shoe:
-            my_size = 1
-            keystroke = ord(getch())
-            uckey = chr(keystroke & 223) #uppercase letter and 1101 1111
-            if keystroke==ord("2") or keystroke==ord("3") or \
-               keystroke==ord("4") or keystroke==ord("5") or \
-               keystroke==ord("1"):
-                my_size = keystroke-ord("0")
-                keystroke = ord(getch())
-                uckey = chr(keystroke & 223)
-            if uckey == "P" or uckey == "B":
-                self.play(uckey,my_size)
-                return uckey
-            elif keystroke==3:      #ctrl-C
-                raise ValueError("Ctrl-C request to end game")
-            elif keystroke==27:     #ESC
+        my_size = 1
+        while not self.quit_shoe:
+            keystroke = self.get_keystroke()
+            if chr(keystroke) in ("1","2","3","4","5"):
+                my_size = keystroke - ord("0")
+            elif chr(keystroke & 223) in ("P","B","T"): #uckey uppercase
+                return self.play(chr(keystroke & 223),my_size)
+            elif keystroke==3:                      # ctrl-C
+                raise ValueError("Ctrl-C request to end game now")
+            elif keystroke==27:                     # ESC
                 self.quit_this_shoe()
-        return " "
-    #def hand_post(self, win_diff, p_hand, b_hand):
-    #    parent_ret = super(interactive,self).hand_post(win_diff,p_hand,b_hand)
-    #    if self.play_size == 0:
-    #        return ""
-    #    return " %s" % self.last_WLT
+            elif keystroke==13 or keystroke==32:    # enter or space
+                return ""
+            else:
+                print("keystroke(%d)" % keystroke)
+        return ""
     def end_shoe(self):
-        seq2 = ""
-        for i in self.WLseq:
-            for j in i:
-                seq2 += "0123456789abcdefghij"[j]
-            seq2 += " "
         return "Sys(%s) %d-%d-%d=%+.2f, %s" % (self.name,self.won, \
-            self.lost,self.tied,self.money,seq2)
+            self.lost,self.tied,self.money,self.print_WLseq())
 
 class ValSys(BaccSys):
     def hand_post(self, win_diff, p_hand, b_hand):

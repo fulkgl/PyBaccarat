@@ -13,13 +13,10 @@ from playingcards import Card
 from playingcards import Stack
 
 @author <A email="fulkgl@gmail.com">fulkgl@gmail.com</A>
-@version 0.11
 '''
 
 # http://www.stack.nl/~dimitri/doxygen/index.html
 import random
-
-__version__ = 0.01
 
 
 class Card(object):
@@ -32,9 +29,9 @@ class Card(object):
 
     Example usage:
     @code{.py}
-        import baccarat.playingcards
+        import pybaccarat.playingcards
         #create a five of spades
-        card5s = baccarat.playingcards.Card(43) #(5, 's')
+        card5s = pybaccarat.playingcards.Card(43) #(5, 's')
         #print this card
         print(card5s) #displays '5s'
     @endcode
@@ -52,13 +49,13 @@ class Card(object):
 
         Example usage:
         @code{.py}
-            import baccarat.playingcards
+            import pybaccarat.playingcards
             #create a five of spades
-            card5s = baccarat.playingcards.Card(43) #(5, 's')
+            card5s = pybaccarat.playingcards.Card(43) #(5, 's')
             #create a jack of diamods
-            cardJh = baccarat.playingcards.Card(11, 'd')
+            cardJh = pybaccarat.playingcards.Card(11, 'd')
             #create an ace of clubs
-            cardAs = baccarat.playingcards.Card("Ac")
+            cardAs = pybaccarat.playingcards.Card("Ac")
         @endcode
 
         The first syntax is a single integer value 0 to 51. This would likely
@@ -66,7 +63,7 @@ class Card(object):
         Such as a complete deck of cards. To create a complete deck of cards
         use the following code.
         @code{.py}
-            import baccarat.playingcards
+            import pybaccarat.playingcards
             deck = []
             for c in range(52):
                 deck.append(Card(c))
@@ -96,8 +93,8 @@ class Card(object):
 
             An example of an exception is:
             @code{.py}
-                import baccarat.playingcards
-                c = baccarat.playingcards.Card(66)
+                import pybaccarat.playingcards
+                c = pybaccarat.playingcards.Card(66)
                 ValueError: new_ordinal(66) not in legal range 0..51
             @endcode
         '''
@@ -156,40 +153,7 @@ class Card(object):
         else:
             raise ValueError("invalid syntax new_ordinal(%s) suit(%s)" % (
                 str(new_ordinal),str(new_suit)))
-        #
-        '''
-            if not isinstance(new_ordinal, int):
-                raise ValueError("new_ordinal(%s) not an integer" %
-                                 str(new_ordinal))
 
-            if new_suit is None:
-                #
-                # The first syntax has been used. new_ordinal must be an integer
-                # in the range 0 to 51.
-                #
-                if (new_ordinal < 0) or (51 < new_ordinal):
-                    raise ValueError("new_ordinal(%s) not in legal range 0..51"%
-                                     str(new_ordinal))
-                new_rank = 1 + (new_ordinal % 13)
-                new_suit = 'cdhs'[new_ordinal // 13]
-            else:
-                #
-                # The second syntax has been used. One integer (1 to 13) and a
-                # single string character for the suit.
-                #
-                if (new_ordinal < 1) or (13 < new_ordinal):
-                    raise ValueError("new_ordinal(%s) not in rank range 1..13" %
-                                     str(new_ordinal))
-                if (not isinstance(new_suit, str)) or (len(new_suit) != 1):
-                    raise ValueError("new_suit(%s) is not a single char" %
-                                     str(new_suit))
-                suit_index = 'cdhs'.index(new_suit)
-                if suit_index == -1:
-                    raise ValueError("new_suit(%s) not a legal value('cdhs')" %
-                                     str(new_suit))
-                new_rank = new_ordinal
-                new_ordinal = (new_rank - 1) + (13 * suit_index)
-        '''
         #
         # save data
         #
@@ -208,7 +172,7 @@ class Card(object):
         # class is a poor idea. A separate class with the images is a better
         # idea.
         #
-        self.face_up = False
+        #self.face_up = False
 
     # -------------------------------------------------------------------------
     def get_rank(self):
@@ -285,11 +249,11 @@ class Card(object):
 
         Example usage:
         @code{.py}
-          import baccarat.playingcards
+          import pybaccarat.playingcards
           #create a five of spades
-          first = baccarat.playingcards.Card(43) #(5, 's')
+          first = pybaccarat.playingcards.Card(43) #(5, 's')
           #create a second five of spades
-          second = baccarat.playingcards.Card(43) #(5, 's')
+          second = pybaccarat.playingcards.Card(43) #(5, 's')
           #test if they are equal
           if first == second:
              print("they are equal")
@@ -425,8 +389,8 @@ class Shoe(object):
 
         Example usage:
         @code{.py}
-            import playingcards
-            shoe = playingcards.Shoe(8) #create 8 deck shoe
+            import pybaccarat.playingcards
+            shoe = pybaccarat.playingcards.Shoe(8) #create 8 deck shoe
             shoe.reset()
             shoe.shuffle()
         @endcode
@@ -442,13 +406,13 @@ class Shoe(object):
             # In this case we are running a blackjack tournament, so a special
             # deck with just these 6 cards are shuffled and dealt out to assign
             # tournament starting positions for a 6 spot tournament table.
-            import playingcards
-            shoe = playingcards.Shoe([ Card(1,'s'), Card(2,'s'),
+            import pybaccarat.playingcards
+            shoe = pybaccarat.playingcards.Shoe([ Card(1,'s'), Card(2,'s'),
                 Card(3,'s'), Card(4,'s'), Card(5,'s'), Card(6,'s') ])
             shoe.reset()
             shoe.shuffle()
             for i in range(6):
-                print(shoe.deal())
+                &nbsp;&nbsp;print(shoe.deal())
         @endcode
 
         @param self this object pointer reference
@@ -478,9 +442,37 @@ class Shoe(object):
                         raise ValueError("non-card type params(%s)" % type(i))
                     self.__cards.append(i)
             elif isinstance(number_decks, str):
+                ten = Card(10, 's')
+                nine = Card(9, 's')
+                ace = Card(1, 's')
+                for i in range(2):
+                    self.__cards.append(ace)
+                for i in number_decks:
+                    if i == "B":
+                        self.__cards.append(ten)  #p1
+                        self.__cards.append(ten)  #b1
+                        self.__cards.append(ten)  #p2
+                        self.__cards.append(nine) #b2
+                    elif i == "P":
+                        self.__cards.append(ten)  #p1
+                        self.__cards.append(ten)  #b1
+                        self.__cards.append(nine) #p2
+                        self.__cards.append(ten)  #b2
+                    elif i == "T":
+                        self.__cards.append(nine) #p1
+                        self.__cards.append(nine) #b1
+                        self.__cards.append(nine) #p2
+                        self.__cards.append(nine) #b2
+                    else:
+                        raise ValueError("number_decks(%s) invalid value(%s)" %
+                                         (str(number_decks), i))
+                # 7 = 14 - (4-6)(last hand) - (1-3)(pent-ultimate hand)
+                for i in range(7):
+                    self.__cards.append(ace)
                 # pass.... filespec?
-                raise ValueError("number_decks(%s) not a valid syntax" %
-                                 str(number_decks))
+                # pass.... BPT sequence
+                #raise ValueError("number_decks(%s) not a valid syntax" %
+                #                 str(number_decks))
                 #
             else:
                 raise ValueError("number_decks(%s) not a valid syntax" %
