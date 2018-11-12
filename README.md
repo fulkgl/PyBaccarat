@@ -63,6 +63,7 @@ associate a connection to the remote host.</li>
 <li>del /s/q build dist pybaccarat.egg-info</li>
 <li>rmdir /s/q build dist pybaccarat.egg-info</li>
 <li>del /s/q tests\*.pyc pybaccarat\*.pyc</li>
+<li>rmdir pybaccarat\__pycache__</li>
 </ol>
 <li>Build the code</li>
 <br>python setup.py build bdist sdist

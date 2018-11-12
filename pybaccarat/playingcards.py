@@ -755,7 +755,7 @@ class Shoe(object):
             i = 0
             # write a psuedo burn first
             line = ""
-            burn_size = self.__cards[i].rank()
+            burn_size = self.__cards[i].get_rank()
             if burn_size > 9:
                 burn_size = 10
             while i < len(self.__cards) and i < (1 + burn_size):

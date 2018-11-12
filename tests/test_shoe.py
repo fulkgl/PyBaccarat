@@ -161,7 +161,8 @@ class TestShoe(unittest.TestCase):
         temp_file = os.sep + 'tmp' + os.sep + 'ut1.shoe'
         delete_file(temp_file)
         shoe.save_shoe(temp_file)
-        expect = "Ac 2c 3c 4c 5c 6c 7c \n"+\
+        expect = "Ac 2c \n"+\
+                 "3c 4c 5c 6c 7c \n"+\
                  "8c 9c Tc Jc Qc \n"+\
                  "Kc Ad 2d 3d 4d \n"+\
                  "5d 6d 7d 8d 9d \n"+\

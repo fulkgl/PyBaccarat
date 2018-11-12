@@ -47,7 +47,6 @@ class TestScoreboard(unittest.TestCase):
     def test_basics(self):
         # 1. empty board
         b0 = Scoreboard(0)
-        #b0.set_debug()
         empty_board = \
           "....v....1....v....2....v....3....v....4....v....5....v....6 R0\n"+\
           "                                                              0\n"+\
@@ -152,8 +151,6 @@ class TestScoreboard(unittest.TestCase):
           " BBB                                                          1\n"
         actual = b0.print_lines()
         self.assertEqual(board6, actual, "basic 2P 8B\n%s"%actual)
-        # 
-        b0.set_debug(False)
 
     def test_extreme_slide(self):
         '''
@@ -171,11 +168,8 @@ class TestScoreboard(unittest.TestCase):
         actual = b0.print_lines()
         self.assertEqual(empty_board, actual, "check empty board")
         # mark 64 straight Players (slide to pre-max)
-        #b0.set_debug(True)
         for i in range(64):
-            #print("extreme i=%d" % i)
             b0.mark('P')
-        b0.set_debug(False)
         board1 = \
           "....v....1....v....2....v....3....v....4....v....5....v....6 R0\n"+\
           "P                                                             1\n"+\
@@ -215,7 +209,6 @@ class TestScoreboard(unittest.TestCase):
         test a specific slide condition, 9116
         '''
         b0 = Scoreboard(0)
-        #b0.set_debug()
         empty_board = \
           "....v....1....v....2....v....3....v....4....v....5....v....6 R0\n"+\
           "                                                              0\n"+\
@@ -255,7 +248,6 @@ class TestScoreboard(unittest.TestCase):
           "PPPP                                                          2\n"
         actual = b0.print_lines()
         self.assertEqual(board2, actual, "after 9116\n%s"%actual)
-        b0.set_debug(False)
 
     def test_91176_slide(self):
         '''
@@ -302,9 +294,7 @@ class TestScoreboard(unittest.TestCase):
         actual = b0.print_lines()
         self.assertEqual(board2, actual, "after 9116\n%s"%actual)
         # now add that 7th B
-        #b0.set_debug()
         b0.mark('B')
-        #b0.set_debug(False)
         board3 = \
           "....v....1....v....2....v....3....v....4....v....5....v....6 R0\n"+\
           "PBPB                                                          4\n"+\
@@ -329,7 +319,6 @@ class TestScoreboard(unittest.TestCase):
         actual = b0.print_lines()
         self.assertEqual(board4, actual, "after 91174\n%s"%actual)
         # 5th P
-        #b0.set_debug()
         b0.mark('P')
         board5 = \
           "....v....1....v....2....v....3....v....4....v....5....v....6 R0\n"+\

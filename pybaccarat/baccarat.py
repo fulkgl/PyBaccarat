@@ -16,13 +16,14 @@ This module is collection of classes used with playing the game
 0.18 basic functions all working promperly
 0.19 interactive script added to installation,remove hand_num param on hand_pre
 0.20 added JustBoards
-0.21
+0.21 play script add, just_boards
+0.22 save_shoe had small error, scoreboard no more debug
 '''
 
 
 from pybaccarat.playingcards import Card,Shoe
 
-__version__ = 0.21  ##!<@version 0.21
+__version__ = 0.22  ##!<@version 0.22
 
 
 class Hand(object):
