@@ -38,7 +38,7 @@ class Card(object):
     @see Shoe
     '''
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------
     def __init__(self, new_ordinal, new_suit=None):
         '''!
         Create a new playing card. There are 3 syntaxes that can be used to
@@ -63,7 +63,7 @@ class Card(object):
         Such as a complete deck of cards. To create a complete deck of cards
         use the following code.
         @code{.py}
-            import pybaccarat.playingcards
+            from pybaccarat.playingcards import Card
             deck = []
             for c in range(52):
                 deck.append(Card(c))
@@ -74,10 +74,18 @@ class Card(object):
         in case a single card is wanted. The syntax would be 2 arguments:
         rank and suit. The rank is an integer in the range 1 to 13.
         The suit is a single string character.
+        @code{.py}
+            from pybaccarat.playingcards import Card
+            c5s = Card(5, 's')  # create a five of spades
+        @endcode
 
         The third syntax is similar to the second, only using the string
-        representation of the Card. This is the same syntax used to write a
-        Card object with the str() method.
+        representation of the Card. This is the same syntax used to write
+        a Card object with the str() method.
+        @code{.py}
+            from pybaccarat.playingcards import Card
+            c5s = Card('5s')  # create a five of spades
+        @endcode
 
         @param self this object pointer reference
         @param new_ordinal integer value 0 to 51 inclusive.
@@ -104,7 +112,7 @@ class Card(object):
         #
         if isinstance(new_ordinal, str) and new_suit is None:
             #
-            # Third syntax for string representation
+            # Third syntax, input string representation. Card('5s')
             #
             new_ordinal = new_ordinal.strip()
             if len(new_ordinal) != 2:
@@ -116,7 +124,7 @@ class Card(object):
                 raise ValueError("illegal rank part of new_ordinal(%s)" %
                     str(new_ordinal))
             new_rank += 1  # 1..13
-            #accept upper/lower suit name
+            # accept upper/lower suit name
             new_suit = new_ordinal[1].lower()
             suit_index = 'cdhs'.find(new_suit)
             if suit_index == -1:
@@ -126,7 +134,7 @@ class Card(object):
         elif isinstance(new_ordinal, int) and new_suit is not None:
             #
             # The second syntax has been used. One integer (1 to 13) and
-            # a single string character for the suit.
+            # a single string character for the suit. Card(5, 's')
             #
             if (new_ordinal < 1) or (13 < new_ordinal):
                 raise ValueError("new_ordinal(%s) not in rank range 1..13" %
@@ -143,7 +151,7 @@ class Card(object):
         elif isinstance(new_ordinal, int) and new_suit is None:
             #
             # The first syntax has been used. new_ordinal must be an
-            # integer in the range 0 to 51.
+            # integer in the range 0 to 51. Card(43)
             #
             if (new_ordinal < 0) or (51 < new_ordinal):
                 raise ValueError("new_ordinal(%s) not in legal range 0..51" %
@@ -153,6 +161,7 @@ class Card(object):
         else:
             raise ValueError("invalid syntax new_ordinal(%s) suit(%s)" % (
                 str(new_ordinal),str(new_suit)))
+        # we have valid new_rank, new_suit, new_ordinal
 
         #
         # save data
@@ -174,7 +183,7 @@ class Card(object):
         #
         #self.face_up = False
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------
     def get_rank(self):
         '''!
         Return the rank of this card.
@@ -191,7 +200,7 @@ class Card(object):
         '''
         return self.__rank
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------
     def get_suit(self):
         '''!
         Return the suit of this card.
@@ -348,6 +357,16 @@ class Card(object):
         """
         return hash(tuple([self.get_rank(), self.get_suit()]))
     # -------------------------------------------------------------------------
+    def __bool__(self):
+        """!
+        This method is called when the card is used in a boolean expression.
+        Since a playing card has no logical reason nor meaning in a boolean
+        expression we are raising an exception to avoid an incorrect use of
+        a card.
+        """
+        raise ValueError("bool() not permitted")
+
+    # -------------------------------------------------------------------------
 # end class Card()
 
 
@@ -424,6 +443,14 @@ class Shoe(object):
             If the input parameter <em>number_decks</em> is not a legal
             integer.
         @todo need a finite limit to number_decks
+        
+        Shoe()
+        Shoe(8)
+        Shoe("PBPPBBB")
+        Shoe([Card(43),Card(37),])
+        Shoe(0)
+        s.save_shoe("filespec")
+        s.load_shoe("filespec")
         '''
         #
         # validate params
@@ -481,10 +508,12 @@ class Shoe(object):
             #
             # number_decks is an integer
             #
-            self.__enable_shuffle = True
-            if (number_decks < 1) or (12 < number_decks):
+            # number_decks==0 is permitted so that a custom shoe can be
+            # loaded. Do not enable shuffle for 0 deck shoe.
+            if (number_decks < 0) or (12 < number_decks):
                 raise ValueError("number_decks(%s) not a legal value" %
                                  str(number_decks))
+            self.__enable_shuffle = (0 < number_decks)
             for _ in range(number_decks):
                 for _ in range(52):
                     self.__cards.append(Card(_))
@@ -580,7 +609,7 @@ class Shoe(object):
         #
         self.__cut_card_position = position
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------
     def cut_card_seen(self):
         '''!
         Return has the cut card been seen?
@@ -603,7 +632,7 @@ class Shoe(object):
         '''
         return self.__cut_card_position <= self.__next_card
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------
     def deal(self):
         '''!
         Deal a Card from the Shoe.
@@ -726,7 +755,10 @@ class Shoe(object):
             i = 0
             # write a psuedo burn first
             line = ""
-            while i < len(self.__cards) and i < 7:
+            burn_size = self.__cards[i].rank()
+            if burn_size > 9:
+                burn_size = 10
+            while i < len(self.__cards) and i < (1 + burn_size):
                 line += str(self.__cards[i])+" "
                 i += 1
             f.write(line+"\n")
@@ -746,23 +778,23 @@ class Shoe(object):
                 i += 1
             f.write(line+"\n")
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------
     def load_shoe(self, filespec):
         '''!
         Load a shoe from a disk file specified.
         '''
         with open(filespec, 'r') as f:
-            contents = f.read()
-        contents = contents.strip()
-        #while len(contents) > 0:
-        #   parse " " "," "\n"
-        #for i in list_of_cards:
-        #   if isinstance(i, Card):
-        #       self.__cards.append(i)
-        #   elif isinstance(i, str):
-        #       self.__cards.append(Card(i))
-        #   else:
-        #       raise ValueError("non-card type params(%s)" % type(i))
+            lines = f.readlines()
+        for line in lines:
+            if line.startswith("#END"):
+                break
+            if line.startswith("#"):
+                continue
+            st = line.split()
+            for new_card in st:
+                if new_card.startswith("#"):
+                    break
+                self.__cards.append(Card(new_card))
 
     # -------------------------------------------------------------------------
 # end class Shoe()

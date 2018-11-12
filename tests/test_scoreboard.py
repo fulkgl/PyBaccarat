@@ -36,7 +36,7 @@ class TestScoreboard(unittest.TestCase):
         '''
         test the version
         '''
-        self.assertEqual(0.18, __version__, "test target module version")
+        self.assertEqual(0.21, __version__, "test target module version")
 
     def test_constructor(self):
         '''

@@ -7,8 +7,7 @@ systems for playing the game <B>Baccarat</B>.
 @author <A email="fulkgl@gmail.com">fulkgl@gmail.com</A>
 '''
 
-import sys
-from msvcrt import getch
+import readchar
 
 
 class Dragon(object):
@@ -16,7 +15,7 @@ class Dragon(object):
     TBD
     '''
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------
     def __init__(self):
         '''!
         TBD
@@ -26,7 +25,7 @@ class Dragon(object):
         self.dragon_dict = {}
         self.hand_number = 0
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------
     def update_count(self, rank):
         '''!
         Add these ranks to the count.
@@ -37,7 +36,7 @@ class Dragon(object):
         if (rank == 8) or (rank == 9):
             self.dragon_count -= 1
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------
     def new_shoe(self, burn_cards):
         '''!
         Begin a new shoe.
@@ -55,12 +54,12 @@ class Dragon(object):
             'P4': 0, 'P3': 0, 'P2': 0, 'P1': 0, 'Bn': 0, 'Pn': 0, 'Tn': 0,
             'T0': 0}
 
-    # -------------------------------------------------------------------------
-    def hand_pre(self, hand_num):
-        self.hand_number = hand_num
+    # --------------------------------------------------------------------
+    def hand_pre(self):
+        self.hand_number += 1
         return ""
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------
     def hand_post(self, win_diff, player, banker):
         '''!
         TBD
@@ -90,7 +89,7 @@ class Dragon(object):
         return "dragon=%s<%02d%s" % \
             (str(threshold), self.dragon_count, self.dragon_play)
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------
     def end_shoe(self):
         '''!
         TBD
@@ -134,7 +133,7 @@ class Dragon(object):
         out += "dragon_p_money(%d,%d/%d)" % \
             (dragon_p_money, dragon_b_money, dragon_plays)
         return out
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------
 
 
 class EZDragon(object):
@@ -144,7 +143,7 @@ class EZDragon(object):
     for a banker win of 3 card totalling 7.
     '''
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------
     def __init__(self):
         '''!
         TBD
@@ -154,7 +153,7 @@ class EZDragon(object):
         self.count = 0
         self.hand_number = 0
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------
     def add_count(self, card_rank):
         '''!
         Local routine to add a card to the count
@@ -173,11 +172,11 @@ class EZDragon(object):
         if debug:
             print("         count(%d)" % self.count)
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------
     def new_shoe(self, burn_cards):
         '''!
-        Start of a new shoe. Start the new count. The burn card is exposed so
-        we can record that as an initial value.
+        Start of a new shoe. Start the new count. The burn card is exposed
+        so we can record that as an initial value.
         @param <em>burn_rank</em> is the rank of the burn card. Add it to
             the count.
         '''
@@ -186,9 +185,9 @@ class EZDragon(object):
         self.play_w = 0
         self.play_l = 0
 
-    # -------------------------------------------------------------------------
-    def hand_pre(self, hand_num):
-        self.hand_number = hand_num
+    # --------------------------------------------------------------------
+    def hand_pre(self):
+        self.hand_number += 1
         return ""
 
     def hand_post(self, win_diff, player, banker):
@@ -250,19 +249,59 @@ class EZDragon(object):
                                                        result)
         return ret
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------
     def end_shoe(self):
         '''!
         End of shoe. Show results.
         '''
         print("end_shoe() EZDragon %dW-%dL" % (self.play_w, self.play_l))
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------
 
 
 class BaccSys(object):
-    def __init__(self, system_name=""):
+    '''!
+    Class that is used to define a Baccarat System.
+    Children of this class will be individual class definitions for
+    specific Baccarat Systems.
+    This parent class will provide the framework for writing your own
+    system.
+
+    Normal operation would require a call to the parent class method first,
+    then perform any extensions to that method.
+    '''
+    def __init__(self, system_name="", forced_win=None):
+        '''!
+        Create a new baccarat system.
+        @param system_name String name of the new baccarat system
+        '''
+        self._reset()
+        self.special_forced_win = False
+        if forced_win == "JustBoards" and system_name == "JustBoards":
+            self.special_forced_win = True
         self.name = system_name
+
+    def new_shoe(self, burn_cards, boards=None, system_data={}):
+        '''!
+        Start a new shoe.
+        @param burn_cards Card[] an array of cards that contain the burn
+            cards from a new shoe. An element of None means that card was
+            not exposed.
+        @param boards Array an array of the display boards
+        @param system_data Dict dictionary of data used by the baccarat
+            system
+        '''
+        self._reset()
+        self.scoreboards = boards
+        self.system_data = system_data
+        self.WLseq = [[0,0]]
+        return self.special_forced_win
+
+    def _reset(self):
+        '''!
+        Internal use only.
+        Reset the data elements within the baccarat system object.
+        '''
         self.hand_number = 0
         self.play_on = None
         self.play_size = 0
@@ -274,48 +313,67 @@ class BaccSys(object):
         self.WLseq = []
         self.last_WLT = ""
         self.quit_shoe = False
-    def new_shoe(self, burn_cards, boards=None):
-        self.hand_number = 0
-        self.play_on = None
-        self.play_size = 0
-        self.won = 0
-        self.lost = 0
-        self.tied = 0
-        self.money = 0.00
-        self.scoreboards = boards
-        self.WLseq = [[0,0]]
-        self.last_WLT = ""
+
     def set_tie_object(self, tie_track):
+        '''!
+        '''
         self.tie_tracker = tie_track
+
     def set_bpt_object(self, bpt):
+        '''!
+        '''
         self.bpt_tracker = bpt
-    def hand_pre(self, hand_num):
-        self.hand_number = hand_num
+
+    def hand_pre(self):
+        '''!
+        Called prior to the play of a Hand.
+        A baccarat system should assign any plays in this method.
+        The return is a string for display purposes only.
+        @return display string
+        '''
+        self.hand_number = 1
         self.play_on = None
         self.play_size = 0
         return ""
+
     def result_won(self, amount):
+        '''!
+        A method called when a hand wins.
+        '''
         self.won += 1
         self.money += amount
         seq = self.WLseq
-        #if len(seq) < 1:
-        #    seq = [[1,0]]
         if seq[-1][1] > 0:
             seq.append( [0,0] )
         seq[-1][0] += 1
         self.WLseq = seq
         self.last_WLT = "W"
+
     def result_lost(self, amount):
+        '''!
+        A method called when a hand Losses.
+        '''
         self.lost += 1
         seq = self.WLseq
-        #if len(seq) < 1:
-        #    seq = [[0,0]]
-        #else:
         seq[-1][1] += 1
         self.WLseq = seq
         self.money -= amount
         self.last_WLT = "L"
+
     def hand_post(self, win_diff, player_hand, banker_hand):
+        '''!
+        This method is called at the end of a Hand.
+        A baccarat system can update their own results.
+        @param win_diff String[2] A length 2 string containing the winning
+            side ("B" or "P" or "T") and the difference between the winning
+            and lossing sides. A 6-6 tie will have "T0". A 6-4 banker win
+            will have "B2". A natural will use "n" for the difference.
+            An 8-8 tie will have "Tn". A 9-8 banker will would have "Bn".
+        @param player_hand Hand a pointer to the Hand object containing the
+            cards for the players hand. For read-only purposes.
+        @param banker_hand Hand a pointer to the Hand object containing the
+            cards for the bankers hand. For read-only purposes.
+        '''
         # record results of a play
         if self.play_on is not None and self.play_size > 0:
             if self.play_on == "B":
@@ -327,7 +385,7 @@ class BaccSys(object):
                 elif win_diff[0] == "P":
                     self.result_lost(self.play_size)
                 else:
-                    pass#unknown?
+                    pass#unknown
             elif self.play_on == "P":
                 if win_diff[0] == "P":
                     self.result_won(self.play_size)
@@ -353,37 +411,70 @@ class BaccSys(object):
         self.play_on = None
         self.play_size = 0
         return ""
+
     def end_shoe(self):
-        #return ""
+        '''!
+        Method called at the end of a shoe, after all hands have been
+        played. The return string should give a summary of the baccarat
+        system play.
+        @return String display system results
+        '''
         return "Sys(%s) %d-%d-%d=%+.2f, %s" % (self.name,self.won, \
             self.lost,self.tied,self.money,self.print_WLseq())
+
     def opposite_side(self, side):
+        '''!
+        Worker method provided that will return the opposite of "side".
+        @param side String "B" or "P".
+        @return opposite of "side" or None
+        '''
         if side == "P":
             return "B"
         if side == "B":
             return "P"
         return None
+
     def play(self, side, size=1):
+        '''!
+        A method called during hand_pre() to assign a play.
+        @param side String "B" or "P" or "T"
+        @param size integer
+        '''
         self.play_on = side
         self.play_size = size
         return side
+
     def quit_this_shoe(self):
+        '''!
+        Mark this shoe as no more plays.
+        '''
         self.quit_shoe = True
+
     def print_WLseq(self):
+        '''!
+        Return a string for display purposes of the Win/Lose sequences.
+        '''
         seq = ""
         for i in self.WLseq:
             for j in i:
-                seq += "0123456789abcdefghij"[j]
+                seq += "0123456789abcdefghijklmnopqrstuvwxyz"[j]
             seq += " "
         return seq
+
     def get_keystroke(self):
-        keystroke = ord(getch())
-        if 3 <= sys.version_info[0]:
-            keystroke1 = ord(getch())
-            keystroke += 256*keystroke1
+        '''!
+        A method that will get a keystroke and return it as an integer
+        value.
+        @return integer keystroke value
+        '''
+        keystroke = 0
+        #keystroke = ord(readchar.readkey())
+        getch = readchar.readkey()
+        for o in getch:
+            keystroke = keystroke*256 + ord(o)
         return keystroke
 
-class interactive(BaccSys):
+class Interactive(BaccSys):
     '''!
     Play Baccarat with interactive selection of hand plays.
     Press the letter P to play player.
@@ -396,50 +487,119 @@ class interactive(BaccSys):
     If no number is pressed it's assumed to be 1.
     '''
     def __init__(self, system_name=""):
-        # first, call parent
-        parent_ret = super(interactive,self).__init__("interactive")
-    def hand_pre(self, hand_num):
+        return super(Interactive,self).__init__("interactive")
+    def hand_pre(self):
         '''
         We are given a chance to choose a play, prior to dealing cards.
-        @param hand_num int hand number
         @return String description of play, such as "P" or "B".
             The returned string is for display purposes only.
             The tracking of the bet made is in the inheritted object
             play_on and play_size.
         '''
-        # first, call parent
-        parent_ret = super(interactive,self).hand_pre(hand_num)
+        parent_ret = super(Interactive,self).hand_pre()
         my_size = 1
         while not self.quit_shoe:
             keystroke = self.get_keystroke()
-            if chr(keystroke) in ("1","2","3","4","5"):
+            #getch = readchar.readkey()
+            #keystroke = 0
+            #for o in getch:
+            #    keystroke = keystroke*256 + ord(o)
+            if chr(keystroke & 223) in ("P","B","T"): #uppercase
+                return self.play(chr(keystroke & 223),my_size) #make a play
+            elif chr(keystroke) in ("1","2","3","4","5"): #bet size
                 my_size = keystroke - ord("0")
-            elif chr(keystroke & 223) in ("P","B","T"): #uckey uppercase
-                return self.play(chr(keystroke & 223),my_size)
-            elif keystroke==3:                      # ctrl-C
+            elif keystroke==3:                      # ctrl-C raise exception
                 raise ValueError("Ctrl-C request to end game now")
-            elif keystroke==27:                     # ESC
+            elif keystroke==27 or keystroke==6939:  # ESC,ESC+ESC quit shoe
                 self.quit_this_shoe()
-            elif keystroke==13 or keystroke==32:    # enter or space
+            elif keystroke==13 or keystroke==32:    # enter or space no play
                 return ""
             else:
-                print("keystroke(%d)" % keystroke)
+                print("unhandled key(%s)(%d)" % (chr(keystroke),keystroke))
         return ""
-    def end_shoe(self):
-        return "Sys(%s) %d-%d-%d=%+.2f, %s" % (self.name,self.won, \
-            self.lost,self.tied,self.money,self.print_WLseq())
+
+
+class JustBoards(BaccSys):
+    def __init__(self, system_name=""):
+        return super(JustBoards,self).__init__("JustBoards",
+            forced_win="JustBoards")
+    def hand_pre(self):
+        parent_ret = super(JustBoards,self).hand_pre()
+        while not self.quit_shoe:
+            #keystroke = self.get_keystroke() #get int keystroke
+            #keystroke = ord(readchar.readkey())
+            keystroke = self.get_keystroke()
+            if chr(keystroke & 223) in ("P","B","T"): #uppercase
+                #return self.play(chr(keystroke & 223)) #make a play
+                return chr(keystroke & 223)
+            elif chr(keystroke & 223) in ("X"):
+                return chr(keystroke & 223)
+            elif keystroke==3:                      # ctrl-C raise exception
+                raise ValueError("Ctrl-C request to end game now")
+            elif keystroke==27:                     # ESC quit shoe
+                self.quit_this_shoe()
+            elif keystroke==13 or keystroke==32:    # enter or space no play
+                pass#return ""
+            else:
+                print("unhandled key(%s)(%d)" % (chr(keystroke),keystroke))
+        return ""
+
+
+class George1(BaccSys):
+    '''
+    George bacc system 1.
+    '''
+    def __init__(self, system_name=""):
+        parent = super(George1,self).__init__("George1") #call parent
+        self.George1_size = 3 #post 5 bet 2, post 6 bet 3
+        return parent
+    def hand_pre(self):
+        '''
+        Call out to this method before each hand is played.
+        Our system is responsible for making plays prior to
+        the play of the hand by calling self.play("B",1).
+        Where the "B" or "P" is the side and 1 is the size.
+        Before our method is called the default is no play.
+        This method returns a string used in the output for
+        this hand.
+        '''
+        parent = super(George1,self).hand_pre() #call parent
+        # get the array for board #2 ie: [..., ['C', 5]]
+        b2_array = self.scoreboards[2].get_array()
+        if len(b2_array) < 2:
+            return "" #not on the board yet"
+        if b2_array[-1][1] < 5:
+            return "" #R2 < 5"
+        b0_array = self.scoreboards[0].get_array()
+        arrayB = self.scoreboards[0].get_peek_B_array(b0_array)
+        peekB2 = self.scoreboards[2].get_cs_mark(arrayB)
+        len_R2 = b2_array[-1][1]
+        if len_R2 in (5,6):
+            long_R2 = b2_array[-1][0]
+            # We had 5 long_R2 plays in a row. We now bet opposite.
+            # peekB2 is the next play for Banker.
+            if peekB2 == long_R2:
+                self.play("P",len_R2-self.George1_size)
+            else:
+                self.play("B",len_R2-self.George1_size)
+            self.George1_size = 4
+            return ("playG%d"%len_R2)+long_R2+"(%s)"%peekB2
+        #elif b2_array[-1][1] == 6:
+        #    return "playG6"+b2_array[-1][0]+"(B=%s)"%peekB2
+        #return "noplayG7"+b2_array[-1][0]
+        return "playG7"
 
 class ValSys(BaccSys):
     def hand_post(self, win_diff, p_hand, b_hand):
         parent_ret = super(ValSys,self).hand_post(win_diff,p_hand,b_hand)
         return " %s" % self.last_WLT
-    def hand_pre(self, hand_num):
+    def hand_pre(self):
         '''!
         ValSystem rules:
         1. if board 2 last entry is in row 1, play chop else play same
         2. overrides rule 1. If 4+ in a row on board 0, play same
         '''
-        parent_ret = super(ValSys,self).hand_pre(hand_num)
+        parent_ret = super(ValSys,self).hand_pre()
         #
         if self.scoreboards is not None:
             b0_array = self.scoreboards[0].get_array()
@@ -460,6 +620,7 @@ class ValSys(BaccSys):
                     return "val(%d)=%s" % (rule,self.play_on)
         #
         return ""
+
     def end_shoe(self):
         seq2 = ""
         for i in self.WLseq:
